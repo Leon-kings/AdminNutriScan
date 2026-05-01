@@ -1,785 +1,14 @@
-// /* eslint-disable react-hooks/set-state-in-effect */
-// /* eslint-disable no-unused-vars */
-// /* eslint-disable react-refresh/only-export-components */
-// import React, { useState, useEffect, createContext, useContext } from "react";
-// import {
-//   BrowserRouter,
-//   Routes,
-//   Route,
-//   Navigate,
-//   useNavigate,
-//   useLocation,
-// } from "react-router-dom";
-
-// // --- Tailwind CSS CDN (add to index.html or via build tool) ---
-// // <script src="https://cdn.tailwindcss.com"></script>
-
-// // --- Auth Context for global user state ---
-// const AuthContext = createContext(null);
-// export const useAuth = () => useContext(AuthContext);
-
-// // --- REAL API CONFIGURATION ---
-// // Replace this base URL with your actual backend API endpoint
-// const API_BASE_URL = "https://reqres.in/api"; // Using reqres.in as mock API endpoint for demo
-// // For a real backend, change to: 'https://your-api.com/api'
-
-// // Real API login function
-// const loginUser = async (email, password) => {
-//   try {
-//     const response = await fetch(`${API_BASE_URL}/login`, {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/json",
-//       },
-//       body: JSON.stringify({ email, password }),
-//     });
-
-//     const data = await response.json();
-
-//     if (!response.ok) {
-//       throw new Error(data.error || "Invalid email or password");
-//     }
-
-//     // After successful login, fetch user details (in real API, you'd have a /me endpoint)
-//     // For demo, we'll simulate user role fetch. Replace with actual user endpoint.
-//     const userDetails = await fetchUserByEmail(email);
-
-//     return {
-//       success: true,
-//       user: userDetails,
-//       token: data.token, // Store token for authenticated requests
-//     };
-//   } catch (error) {
-//     return {
-//       success: false,
-//       message: error.message || "Login failed. Please try again.",
-//     };
-//   }
-// };
-
-// // Fetch user details from real API (replace with your actual endpoint)
-// const fetchUserByEmail = async (email) => {
-//   // In a real app, you'd call: GET ${API_BASE_URL}/users/me with the token
-//   // For demo purposes, we'll simulate role assignment based on email
-//   // Replace this with actual API call to your backend
-
-//   // Simulate API delay
-//   await new Promise((resolve) => setTimeout(resolve, 300));
-
-//   // Real role determination - in production, this comes from your backend
-//   if (email === "manager@resto.com" || email === "manager@example.com") {
-//     return { id: 1, email, name: "Alex Manager", role: "manager" };
-//   } else if (email === "chef@resto.com" || email === "chef@example.com") {
-//     return { id: 2, email, name: "Gordon Chef", role: "chef" };
-//   }
-
-//   // Default fallback - your API should return role from database
-//   return { id: 3, email, name: email.split("@")[0], role: "staff" };
-// };
-
-// // Example of authenticated API request helper
-// const authenticatedFetch = async (url, token, options = {}) => {
-//   return fetch(`${API_BASE_URL}${url}`, {
-//     ...options,
-//     headers: {
-//       "Content-Type": "application/json",
-//       Authorization: `Bearer ${token}`,
-//       ...options.headers,
-//     },
-//   });
-// };
-
-// // --- Protected Route Wrapper (checks auth + role) ---
-// const ProtectedRoute = ({ children, allowedRoles }) => {
-//   const { user, loading } = useAuth();
-//   const location = useLocation();
-
-//   if (loading) {
-//     return (
-//       <div className="min-h-screen flex items-center justify-center bg-gray-100">
-//         <div className="text-center">
-//           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto"></div>
-//           <p className="mt-3 text-gray-600">Loading session...</p>
-//         </div>
-//       </div>
-//     );
-//   }
-
-//   if (!user) {
-//     return <Navigate to="/login" state={{ from: location }} replace />;
-//   }
-
-//   if (allowedRoles && !allowedRoles.includes(user.role)) {
-//     if (user.role === "manager") return <Navigate to="/dashboard" replace />;
-//     if (user.role === "chef") return <Navigate to="/chef/dashboard" replace />;
-//     return <Navigate to="/login" replace />;
-//   }
-
-//   return children;
-// };
-
-// // --- LOGIN MODAL COMPONENT (with real API integration) ---
-// const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
-//   const [email, setEmail] = useState("");
-//   const [password, setPassword] = useState("");
-//   const [error, setError] = useState("");
-//   const [isLoading, setIsLoading] = useState(false);
-//   const navigate = useNavigate();
-
-//   if (!isOpen) return null;
-
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
-//     setError("");
-//     setIsLoading(true);
-
-//     try {
-//       const result = await loginUser(email, password);
-
-//       if (result.success) {
-//         // Store token in localStorage (not cookies)
-//         if (result.token) {
-//           localStorage.setItem("auth_token", result.token);
-//         }
-//         onLoginSuccess(result.user);
-//         onClose();
-
-//         // Navigate based on role
-//         if (result.user.role === "manager") {
-//           navigate("/dashboard");
-//         } else if (result.user.role === "chef") {
-//           navigate("/chef/dashboard");
-//         } else {
-//           navigate("/");
-//         }
-//       } else {
-//         setError(result.message);
-//       }
-//     } catch (err) {
-//       setError("Network error. Please try again.");
-//     } finally {
-//       setIsLoading(false);
-//     }
-//   };
-
-//   return (
-//     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-all duration-300">
-//       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden mx-4">
-//         <button
-//           onClick={onClose}
-//           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10 bg-white rounded-full p-1 shadow-md"
-//         >
-//           <svg
-//             xmlns="http://www.w3.org/2000/svg"
-//             className="h-6 w-6"
-//             fill="none"
-//             viewBox="0 0 24 24"
-//             stroke="currentColor"
-//           >
-//             <path
-//               strokeLinecap="round"
-//               strokeLinejoin="round"
-//               strokeWidth={2}
-//               d="M6 18L18 6M6 6l12 12"
-//             />
-//           </svg>
-//         </button>
-
-//         <div className="flex flex-col md:flex-row">
-//           {/* LEFT IMAGE SECTION */}
-//           <div className="md:w-1/2 bg-gradient-to-br from-amber-500 to-orange-600 p-8 flex flex-col justify-center items-center text-white">
-//             <div className="text-center">
-//               <svg
-//                 xmlns="http://www.w3.org/2000/svg"
-//                 className="h-24 w-24 mx-auto mb-4 drop-shadow-lg"
-//                 fill="none"
-//                 viewBox="0 0 24 24"
-//                 stroke="currentColor"
-//               >
-//                 <path
-//                   strokeLinecap="round"
-//                   strokeLinejoin="round"
-//                   strokeWidth={1.5}
-//                   d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-1.5 6.5M17 13l1.5 6.5M9 21h6M12 17v4M6 3h12l-1 4H7L6 3z"
-//                 />
-//               </svg>
-//               <h2 className="text-3xl font-bold mb-2">Welcome Back</h2>
-//               <p className="text-amber-100">Sign in to access your dashboard</p>
-//               <div className="mt-6 w-24 h-1 bg-white/50 rounded-full mx-auto"></div>
-//               <p className="mt-6 text-sm text-amber-50">
-//                 Demo Manager: manager@resto.com / any password
-//               </p>
-//               <p className="text-sm text-amber-50">
-//                 Demo Chef: chef@resto.com / any password
-//               </p>
-//             </div>
-//           </div>
-
-//           {/* RIGHT FORM SECTION */}
-//           <div className="md:w-1/2 p-8 bg-white">
-//             <div className="mb-6">
-//               <h3 className="text-2xl font-semibold text-gray-800">Sign In</h3>
-//               <p className="text-gray-500 text-sm mt-1">
-//                 Enter your credentials to continue
-//               </p>
-//             </div>
-//             <form onSubmit={handleSubmit} className="space-y-5">
-//               <div>
-//                 <label className="block text-sm font-medium text-gray-700 mb-1">
-//                   Email address
-//                 </label>
-//                 <div className="relative">
-//                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-//                     <svg
-//                       className="h-5 w-5 text-gray-400"
-//                       fill="none"
-//                       viewBox="0 0 24 24"
-//                       stroke="currentColor"
-//                     >
-//                       <path
-//                         strokeLinecap="round"
-//                         strokeLinejoin="round"
-//                         strokeWidth={2}
-//                         d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
-//                       />
-//                     </svg>
-//                   </div>
-//                   <input
-//                     type="email"
-//                     required
-//                     value={email}
-//                     onChange={(e) => setEmail(e.target.value)}
-//                     className="pl-10 w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition"
-//                     placeholder="you@example.com"
-//                   />
-//                 </div>
-//               </div>
-//               <div>
-//                 <label className="block text-sm font-medium text-gray-700 mb-1">
-//                   Password
-//                 </label>
-//                 <div className="relative">
-//                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-//                     <svg
-//                       className="h-5 w-5 text-gray-400"
-//                       fill="none"
-//                       viewBox="0 0 24 24"
-//                       stroke="currentColor"
-//                     >
-//                       <path
-//                         strokeLinecap="round"
-//                         strokeLinejoin="round"
-//                         strokeWidth={2}
-//                         d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-//                       />
-//                     </svg>
-//                   </div>
-//                   <input
-//                     type="password"
-//                     required
-//                     value={password}
-//                     onChange={(e) => setPassword(e.target.value)}
-//                     className="pl-10 w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition"
-//                     placeholder="••••••••"
-//                   />
-//                 </div>
-//               </div>
-//               {error && (
-//                 <div className="bg-red-50 text-red-600 text-sm p-2 rounded-lg border border-red-200">
-//                   {error}
-//                 </div>
-//               )}
-//               <button
-//                 type="submit"
-//                 disabled={isLoading}
-//                 className="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2.5 rounded-lg transition duration-200 flex justify-center items-center gap-2 disabled:opacity-70"
-//               >
-//                 {isLoading && (
-//                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-//                 )}
-//                 {isLoading ? "Authenticating..." : "Login →"}
-//               </button>
-//             </form>
-//             <div className="mt-6 text-center text-xs text-gray-400">
-//               Real API integration • Token stored in localStorage
-//             </div>
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// // --- MANAGER DASHBOARD ---
-// const ManagerDashboard = () => {
-//   const { user, logout } = useAuth();
-//   const [stats, setStats] = useState({ orders: 24, revenue: 4850, staff: 12 });
-//   const [loading, setLoading] = useState(true);
-
-//   useEffect(() => {
-//     // Fetch real data from API
-//     const fetchDashboardData = async () => {
-//       try {
-//         const token = localStorage.getItem("auth_token");
-//         // Example API call - replace with your actual endpoint
-//         // const response = await fetch('https://your-api.com/dashboard/stats', {
-//         //   headers: { 'Authorization': `Bearer ${token}` }
-//         // });
-//         // const data = await response.json();
-//         // setStats(data);
-
-//         // Simulated API delay
-//         setTimeout(() => setLoading(false), 500);
-//       } catch (error) {
-//         console.error("Failed to fetch dashboard data:", error);
-//         setLoading(false);
-//       }
-//     };
-
-//     fetchDashboardData();
-//   }, []);
-
-//   return (
-//     <div className="min-h-screen bg-gray-50">
-//       <nav className="bg-white shadow-md px-6 py-4 flex justify-between items-center">
-//         <div className="flex items-center gap-2">
-//           <div className="bg-amber-600 p-2 rounded-lg">
-//             <svg
-//               xmlns="http://www.w3.org/2000/svg"
-//               className="h-6 w-6 text-white"
-//               fill="none"
-//               viewBox="0 0 24 24"
-//               stroke="currentColor"
-//             >
-//               <path
-//                 strokeLinecap="round"
-//                 strokeLinejoin="round"
-//                 strokeWidth={2}
-//                 d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-//               />
-//             </svg>
-//           </div>
-//           <h1 className="text-xl font-bold text-gray-800">Manager Portal</h1>
-//         </div>
-//         <div className="flex items-center gap-4">
-//           <span className="text-sm text-gray-600">👋 Hi, {user?.name}</span>
-//           <button
-//             onClick={logout}
-//             className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg text-sm font-medium transition"
-//           >
-//             Logout
-//           </button>
-//         </div>
-//       </nav>
-//       <div className="p-6 max-w-6xl mx-auto">
-//         <div className="mb-8">
-//           <h2 className="text-2xl font-bold text-gray-800">
-//             Dashboard Overview
-//           </h2>
-//           <p className="text-gray-500">
-//             Restaurant performance metrics & management tools
-//           </p>
-//         </div>
-//         {loading ? (
-//           <div className="flex justify-center py-12">
-//             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
-//           </div>
-//         ) : (
-//           <>
-//             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-//               <div className="bg-white rounded-xl shadow p-6 border-l-4 border-amber-500">
-//                 <div className="flex items-center justify-between">
-//                   <div>
-//                     <p className="text-gray-500 text-sm">Today's Orders</p>
-//                     <p className="text-3xl font-bold">{stats.orders}</p>
-//                   </div>
-//                   <div className="bg-amber-100 p-3 rounded-full">
-//                     <svg
-//                       className="w-6 h-6 text-amber-600"
-//                       fill="none"
-//                       stroke="currentColor"
-//                       viewBox="0 0 24 24"
-//                     >
-//                       <path
-//                         strokeLinecap="round"
-//                         strokeLinejoin="round"
-//                         strokeWidth={2}
-//                         d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
-//                       />
-//                     </svg>
-//                   </div>
-//                 </div>
-//               </div>
-//               <div className="bg-white rounded-xl shadow p-6 border-l-4 border-green-500">
-//                 <div className="flex items-center justify-between">
-//                   <div>
-//                     <p className="text-gray-500 text-sm">Revenue (Today)</p>
-//                     <p className="text-3xl font-bold">${stats.revenue}</p>
-//                   </div>
-//                   <div className="bg-green-100 p-3 rounded-full">
-//                     <svg
-//                       className="w-6 h-6 text-green-600"
-//                       fill="none"
-//                       stroke="currentColor"
-//                       viewBox="0 0 24 24"
-//                     >
-//                       <path
-//                         strokeLinecap="round"
-//                         strokeLinejoin="round"
-//                         strokeWidth={2}
-//                         d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-//                       />
-//                     </svg>
-//                   </div>
-//                 </div>
-//               </div>
-//               <div className="bg-white rounded-xl shadow p-6 border-l-4 border-blue-500">
-//                 <div className="flex items-center justify-between">
-//                   <div>
-//                     <p className="text-gray-500 text-sm">Active Staff</p>
-//                     <p className="text-3xl font-bold">{stats.staff}</p>
-//                   </div>
-//                   <div className="bg-blue-100 p-3 rounded-full">
-//                     <svg
-//                       className="w-6 h-6 text-blue-600"
-//                       fill="none"
-//                       stroke="currentColor"
-//                       viewBox="0 0 24 24"
-//                     >
-//                       <path
-//                         strokeLinecap="round"
-//                         strokeLinejoin="round"
-//                         strokeWidth={2}
-//                         d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-//                       />
-//                     </svg>
-//                   </div>
-//                 </div>
-//               </div>
-//             </div>
-//             <div className="bg-white rounded-xl shadow p-6">
-//               <h3 className="font-semibold text-lg mb-4">Recent Activity</h3>
-//               <div className="space-y-3">
-//                 <div className="flex justify-between border-b pb-2">
-//                   <span>🍝 Order #234 - Completed</span>
-//                   <span className="text-gray-400 text-sm">10 min ago</span>
-//                 </div>
-//                 <div className="flex justify-between border-b pb-2">
-//                   <span>🥗 New reservation for 8 guests</span>
-//                   <span className="text-gray-400 text-sm">1 hour ago</span>
-//                 </div>
-//                 <div className="flex justify-between">
-//                   <span>⭐ Inventory low: Olive oil</span>
-//                   <span className="text-gray-400 text-sm">2 hours ago</span>
-//                 </div>
-//               </div>
-//             </div>
-//           </>
-//         )}
-//       </div>
-//     </div>
-//   );
-// };
-
-// // --- CHEF DASHBOARD ---
-// const ChefDashboard = () => {
-//   const { user, logout } = useAuth();
-//   const [orders, setOrders] = useState([]);
-//   const [loading, setLoading] = useState(true);
-
-//   useEffect(() => {
-//     // Fetch orders from real API
-//     const fetchOrders = async () => {
-//       try {
-//         const token = localStorage.getItem("auth_token");
-//         // Example API call - replace with your actual endpoint
-//         // const response = await fetch('https://your-api.com/kitchen/orders', {
-//         //   headers: { 'Authorization': `Bearer ${token}` }
-//         // });
-//         // const data = await response.json();
-//         // setOrders(data);
-
-//         // Simulated API data
-//         setTimeout(() => {
-//           setOrders([
-//             {
-//               id: 101,
-//               item: "Margherita Pizza",
-//               table: 4,
-//               status: "pending",
-//               time: "12:30 PM",
-//             },
-//             {
-//               id: 102,
-//               item: "Grilled Salmon",
-//               table: 2,
-//               status: "preparing",
-//               time: "12:45 PM",
-//             },
-//             {
-//               id: 103,
-//               item: "Caesar Salad",
-//               table: 1,
-//               status: "ready",
-//               time: "12:15 PM",
-//             },
-//           ]);
-//           setLoading(false);
-//         }, 500);
-//       } catch (error) {
-//         console.error("Failed to fetch orders:", error);
-//         setLoading(false);
-//       }
-//     };
-
-//     fetchOrders();
-//   }, []);
-
-//   const updateStatus = async (orderId, newStatus) => {
-//     try {
-//       const token = localStorage.getItem("auth_token");
-//       // Example API call to update order status
-//       // await fetch(`https://your-api.com/orders/${orderId}/status`, {
-//       //   method: 'PATCH',
-//       //   headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-//       //   body: JSON.stringify({ status: newStatus })
-//       // });
-
-//       // Optimistic update
-//       setOrders(
-//         orders.map((order) =>
-//           order.id === orderId ? { ...order, status: newStatus } : order,
-//         ),
-//       );
-//     } catch (error) {
-//       console.error("Failed to update order status:", error);
-//     }
-//   };
-
-//   return (
-//     <div className="min-h-screen bg-gray-100">
-//       <nav className="bg-white shadow-md px-6 py-4 flex justify-between items-center">
-//         <div className="flex items-center gap-2">
-//           <div className="bg-green-700 p-2 rounded-lg">
-//             <svg
-//               xmlns="http://www.w3.org/2000/svg"
-//               className="h-6 w-6 text-white"
-//               fill="none"
-//               viewBox="0 0 24 24"
-//               stroke="currentColor"
-//             >
-//               <path
-//                 strokeLinecap="round"
-//                 strokeLinejoin="round"
-//                 strokeWidth={2}
-//                 d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.701 2.701 0 00-1.5-.454M9 6v2m3-2v2m3-2v2M9 3h.01M12 3h.01M15 3h.01M21 21v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7h18z"
-//               />
-//             </svg>
-//           </div>
-//           <h1 className="text-xl font-bold text-gray-800">Chef's Station</h1>
-//         </div>
-//         <div className="flex items-center gap-4">
-//           <span className="text-sm text-gray-600">👨‍🍳 Chef {user?.name}</span>
-//           <button
-//             onClick={logout}
-//             className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg text-sm font-medium transition"
-//           >
-//             Logout
-//           </button>
-//         </div>
-//       </nav>
-//       <div className="p-6 max-w-5xl mx-auto">
-//         <div className="mb-6">
-//           <h2 className="text-2xl font-bold text-gray-800">
-//             Kitchen Order Board
-//           </h2>
-//           <p className="text-gray-500">
-//             Manage & update dish preparation status
-//           </p>
-//         </div>
-//         {loading ? (
-//           <div className="flex justify-center py-12">
-//             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
-//           </div>
-//         ) : (
-//           <>
-//             <div className="grid gap-5 md:grid-cols-2">
-//               {orders.map((order) => (
-//                 <div
-//                   key={order.id}
-//                   className="bg-white rounded-xl shadow-md overflow-hidden transition hover:shadow-lg"
-//                 >
-//                   <div className="p-5">
-//                     <div className="flex justify-between items-start">
-//                       <div>
-//                         <span className="text-sm font-semibold text-gray-500">
-//                           Order #{order.id}
-//                         </span>
-//                         <h3 className="text-xl font-bold mt-1">{order.item}</h3>
-//                         <div className="flex gap-3 mt-2 text-sm text-gray-600">
-//                           <span>🍽️ Table {order.table}</span>
-//                           <span>⏱️ {order.time}</span>
-//                         </div>
-//                       </div>
-//                       <span
-//                         className={`px-3 py-1 rounded-full text-xs font-medium ${
-//                           order.status === "pending"
-//                             ? "bg-yellow-100 text-yellow-800"
-//                             : order.status === "preparing"
-//                               ? "bg-blue-100 text-blue-800"
-//                               : "bg-green-100 text-green-800"
-//                         }`}
-//                       >
-//                         {order.status.charAt(0).toUpperCase() +
-//                           order.status.slice(1)}
-//                       </span>
-//                     </div>
-//                     <div className="mt-4 flex gap-2">
-//                       {order.status === "pending" && (
-//                         <button
-//                           onClick={() => updateStatus(order.id, "preparing")}
-//                           className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm"
-//                         >
-//                           Start Prep
-//                         </button>
-//                       )}
-//                       {order.status === "preparing" && (
-//                         <button
-//                           onClick={() => updateStatus(order.id, "ready")}
-//                           className="bg-green-600 text-white px-3 py-1.5 rounded-lg text-sm"
-//                         >
-//                           Mark Ready
-//                         </button>
-//                       )}
-//                       {order.status === "ready" && (
-//                         <span className="text-green-700 text-sm font-medium">
-//                           ✅ Ready for service
-//                         </span>
-//                       )}
-//                     </div>
-//                   </div>
-//                 </div>
-//               ))}
-//             </div>
-//             <div className="mt-8 bg-amber-50 p-4 rounded-xl border border-amber-200">
-//               <p className="text-amber-800 text-sm">
-//                 💡 Tip: Update order status as you cook. Completed orders go to
-//                 serving team.
-//               </p>
-//             </div>
-//           </>
-//         )}
-//       </div>
-//     </div>
-//   );
-// };
-
-// // --- LOGIN PAGE (redirects to home with modal) ---
-// const LoginPage = () => {
-//   const { user } = useAuth();
-//   const navigate = useNavigate();
-//   const [showLogin, setShowLogin] = useState(true);
-
-//   useEffect(() => {
-//     if (user) {
-//       if (user.role === "manager") navigate("/dashboard");
-//       else if (user.role === "chef") navigate("/chef/dashboard");
-//       else navigate("/");
-//     }
-//   }, [user, navigate]);
-
-//   return (
-//     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 flex items-center justify-center">
-//       <LoginModal
-//         isOpen={showLogin}
-//         onClose={() => {
-//           setShowLogin(false);
-//           navigate("/");
-//         }}
-//         onLoginSuccess={(user) => {}}
-//       />
-//     </div>
-//   );
-// };
-
-// // --- AUTH PROVIDER WRAPPER ---
-// const AuthProvider = ({ children }) => {
-//   const [user, setUser] = useState(null);
-//   const [loading, setLoading] = useState(true);
-
-//   useEffect(() => {
-//     // Check localStorage for existing session (no cookies)
-//     const storedUser = localStorage.getItem("resto_user");
-//     const token = localStorage.getItem("auth_token");
-
-//     if (storedUser && token) {
-//       setUser(JSON.parse(storedUser));
-//     }
-//     setLoading(false);
-//   }, []);
-
-//   const login = (userData) => {
-//     setUser(userData);
-//     localStorage.setItem("resto_user", JSON.stringify(userData));
-//   };
-
-//   const logout = () => {
-//     setUser(null);
-//     localStorage.removeItem("resto_user");
-//     localStorage.removeItem("auth_token");
-//   };
-
-//   return (
-//     <AuthContext.Provider value={{ user, login, logout, loading }}>
-//       {children}
-//     </AuthContext.Provider>
-//   );
-// };
-
-// // --- MAIN APP WITH ROUTER ---
-// const AppRoutes = () => {
-//   const { user } = useAuth();
-
-//   return (
-//     <Routes>
-//       <Route path="/" element={<Navigate to="/login" replace />} />
-//       <Route path="/login" element={<LoginPage />} />
-//       <Route
-//         path="/dashboard"
-//         element={
-//           <ProtectedRoute allowedRoles={["manager"]}>
-//             <ManagerDashboard />
-//           </ProtectedRoute>
-//         }
-//       />
-//       <Route
-//         path="/chef/dashboard"
-//         element={
-//           <ProtectedRoute allowedRoles={["chef"]}>
-//             <ChefDashboard />
-//           </ProtectedRoute>
-//         }
-//       />
-//       <Route path="*" element={<Navigate to="/login" replace />} />
-//     </Routes>
-//   );
-// };
-
-// // --- ROOT COMPONENT ---
-// export default function App() {
-//   return (
-//     <BrowserRouter>
-//       <AuthProvider>
-//         <AppRoutes />
-//       </AuthProvider>
-//     </BrowserRouter>
-//   );
-// }
 
 /* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable no-unused-vars */
 /* eslint-disable react-refresh/only-export-components */
-import React, { useState, useEffect, createContext, useContext } from "react";
+import React, {
+  useState,
+  useEffect,
+  createContext,
+  useContext,
+  useCallback,
+} from "react";
 import {
   BrowserRouter,
   Routes,
@@ -790,63 +19,76 @@ import {
 } from "react-router-dom";
 import axios from "axios";
 import { Register } from "./components/register/Register";
-
-// --- Tailwind CSS CDN (add to index.html or via build tool) ---
-// <script src="https://cdn.tailwindcss.com"></script>
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { Dashboard } from "./components/dashboard/Dashboard";
+import { ChefDashboard } from "./components/chefdashboard/ChefDashboard";
 
 // --- Auth Context for global user state ---
 const AuthContext = createContext(null);
 export const useAuth = () => useContext(AuthContext);
 
 // --- REAL API CONFIGURATION ---
-// REPLACE THIS WITH YOUR ACTUAL BACKEND API ENDPOINT
-const API_BASE_URL = "https://your-api.com/api";
+const API_BASE_URL = "https://nutriscan-foodanddrinksupply.onrender.com";
 
 // Create axios instance
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  headers: { "Content-Type": "application/json" },
-  timeout: 10000,
 });
 
-// Cookie helpers (replacing localStorage)
-const getTokenFromCookie = () => {
-  const cookies = document.cookie.split(";");
-  for (let cookie of cookies) {
-    const [name, value] = cookie.trim().split("=");
-    if (name === "auth_token") return value;
+// ========== SECURE STORAGE HELPERS (No Cookies) ==========
+// Store only essential user data (email, role) with expiration
+const setAuthData = (token, user) => {
+  const expiresAt = Date.now() + 12 * 60 * 60 * 1000; // 12 hours expiration
+
+  const authData = {
+    token,
+    user: {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      name: user.name || user.email?.split("@")[0],
+    },
+    expiresAt,
+  };
+
+  localStorage.setItem("auth_data", JSON.stringify(authData));
+};
+
+const getAuthData = () => {
+  const data = localStorage.getItem("auth_data");
+  if (!data) return null;
+
+  try {
+    const parsed = JSON.parse(data);
+    // Check if token has expired
+    if (parsed.expiresAt && Date.now() > parsed.expiresAt) {
+      clearAuthData();
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
   }
-  return null;
 };
 
-const setTokenCookie = (token) => {
-  const expires = new Date();
-  expires.setDate(expires.getDate() + 7);
-  document.cookie = `auth_token=${token}; expires=${expires.toUTCString()}; path=/; SameSite=Strict; Secure`;
+const getToken = () => {
+  const authData = getAuthData();
+  return authData?.token || null;
 };
 
-const removeTokenCookie = () => {
-  document.cookie =
-    "auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+const getUserFromStorage = () => {
+  const authData = getAuthData();
+  return authData?.user || null;
 };
 
-// SessionStorage helpers (replacing localStorage for user data)
-const setUserSession = (user) => {
-  sessionStorage.setItem("resto_user", JSON.stringify(user));
-};
-
-const getUserSession = () => {
-  const user = sessionStorage.getItem("resto_user");
-  return user ? JSON.parse(user) : null;
-};
-
-const clearUserSession = () => {
-  sessionStorage.removeItem("resto_user");
+const clearAuthData = () => {
+  localStorage.removeItem("auth_data");
 };
 
 // Axios interceptor for auth token
 apiClient.interceptors.request.use((config) => {
-  const token = getTokenFromCookie();
+  const token = getToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -858,79 +100,97 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      removeTokenCookie();
-      clearUserSession();
+      clearAuthData();
       window.dispatchEvent(new CustomEvent("auth:logout"));
     }
     return Promise.reject(error);
   },
 );
 
-// Real API login function using Axios
+// REAL API login function - FIXED to handle your API response structure
 const loginUser = async (email, password) => {
   try {
     const response = await apiClient.post("/auth/login", { email, password });
     const data = response.data;
 
-    if (data.token) {
-      setTokenCookie(data.token);
-    }
-    if (data.user) {
-      setUserSession(data.user);
-    }
+    console.log("Full Login API Response:", data);
 
-    return {
-      success: true,
-      user: data.user,
-      token: data.token,
-    };
+    // YOUR API RETURNS: { success: true, message: "...", data: { token: "...", user: {...} } }
+    if (data.success === true && data.data) {
+      const token = data.data.token;
+      const userData = data.data.user;
+
+      if (token && userData) {
+        // Store user data with expiration
+        setAuthData(token, {
+          id: userData.id,
+          email: userData.email,
+          role: userData.role,
+          name: userData.name,
+        });
+
+        console.log("Login successful, user role:", userData.role);
+
+        return {
+          success: true,
+          user: {
+            id: userData.id,
+            email: userData.email,
+            role: userData.role,
+            name: userData.name,
+          },
+          token: token,
+        };
+      } else {
+        return {
+          success: false,
+          message: "Invalid response structure from server",
+        };
+      }
+    } else {
+      return {
+        success: false,
+        message: data.message || "Invalid email or password",
+      };
+    }
   } catch (error) {
+    console.error("Login error:", error);
     let message = "Invalid email or password";
-    if (error.response?.data?.error) {
-      message = error.response.data.error;
-    } else if (error.response?.data?.message) {
+    if (error.response?.data?.message) {
       message = error.response.data.message;
+    } else if (error.response?.data?.error) {
+      message = error.response.data.error;
+    } else if (error.message) {
+      message = error.message;
     }
     return { success: false, message };
   }
 };
 
-// REAL LOGOUT FUNCTION - sends request to API to invalidate token
+// LOGOUT FUNCTION - clears localStorage
 const logoutUser = async () => {
   try {
-    const token = getTokenFromCookie();
-
+    const token = getToken();
     if (token) {
-      // Send logout request to backend to invalidate the token
-      await apiClient.post(
-        "/auth/logout",
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
+      // Optional: Send logout request to backend
+      await apiClient
+        .post(
+          "/auth/logout",
+          {},
+          {
+            headers: { Authorization: `Bearer ${token}` },
           },
-        },
-      );
-      console.log("Logout request sent to API successfully");
+        )
+        .catch(() => {
+          // Ignore logout API errors, just clear local data
+          console.log("Logout API call failed, clearing local data only");
+        });
     }
   } catch (error) {
-    // Even if API call fails, we should still clear local data
-    console.error("Logout API error:", error.response?.data || error.message);
+    console.error("Logout error:", error);
   } finally {
-    // Always clear local data regardless of API response
-    removeTokenCookie();
-    clearUserSession();
-  }
-};
-
-// Fetch user by email (for demo compatibility)
-const fetchUserByEmail = async (email) => {
-  try {
-    const response = await apiClient.get(`/users/by-email?email=${email}`);
-    return response.data;
-  } catch (error) {
-    // Fallback for demo
-    return { id: 3, email, name: email.split("@")[0], role: "staff" };
+    // Always clear local storage regardless of API response
+    clearAuthData();
   }
 };
 
@@ -951,25 +211,30 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   }
 
   if (!user) {
+    console.log("ProtectedRoute - No user, redirecting to login");
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
-    if (user.role === "manager") return <Navigate to="/dashboard" replace />;
+    // Redirect based on role
+    if (user.role === "manager") return <Navigate to="/dash/manager" replace />;
     if (user.role === "chef") return <Navigate to="/chef/dashboard" replace />;
-    return <Navigate to="/login" replace />;
+    if (user.role === "staff")
+      return <Navigate to="/staff/dashboard" replace />;
+    return <Navigate to="/" replace />;
   }
 
   return children;
 };
 
-// --- LOGIN MODAL COMPONENT (Demo credentials text REMOVED) ---
+// --- LOGIN MODAL COMPONENT ---
 const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   if (!isOpen) return null;
 
@@ -980,23 +245,44 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
 
     try {
       const result = await loginUser(email, password);
+      console.log("Login result:", result);
 
-      if (result.success) {
+      if (result.success && result.user) {
+        // FIRST: Update the auth context
+        login(result.user);
+
+        // Show success toast only on successful login
+        toast.success(
+          `Welcome back, ${result.user.name || result.user.email}!`,
+        );
         onLoginSuccess(result.user);
         onClose();
 
-        if (result.user.role === "manager") {
-          navigate("/dashboard");
-        } else if (result.user.role === "chef") {
-          navigate("/chef/dashboard");
-        } else {
-          navigate("/");
-        }
+        // Give a small delay to ensure auth state is updated before navigation
+        setTimeout(() => {
+          // Redirect based on role
+          console.log("Redirecting based on role:", result.user.role);
+          if (result.user.role === "manager") {
+            navigate("/dash/manager", { replace: true });
+          } else if (result.user.role === "chef") {
+            navigate("/chef/dashboard", { replace: true });
+          } else if (result.user.role === "staff") {
+            navigate("/staff/dashboard", { replace: true });
+          } else {
+            navigate("/", { replace: true });
+          }
+        }, 100);
       } else {
-        setError(result.message);
+        const errorMsg = result.message || "Invalid email or password";
+        setError(errorMsg);
+        toast.error(errorMsg);
       }
     } catch (err) {
-      setError("Network error. Please try again.");
+      console.error("Login error:", err);
+      const errorMsg =
+        err.response?.data?.message || "Network error. Please try again.";
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setIsLoading(false);
     }
@@ -1046,7 +332,6 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
               <h2 className="text-3xl font-bold mb-2">Welcome Back</h2>
               <p className="text-amber-100">Sign in to access your dashboard</p>
               <div className="mt-6 w-24 h-1 bg-white/50 rounded-full mx-auto"></div>
-              {/* DEMO CREDENTIALS TEXT REMOVED */}
             </div>
           </div>
 
@@ -1120,8 +405,21 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
                 </div>
               </div>
               {error && (
-                <div className="bg-red-50 text-red-600 text-sm p-2 rounded-lg border border-red-200">
-                  {error}
+                <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg border border-red-200 flex items-start gap-2">
+                  <svg
+                    className="w-4 h-4 mt-0.5 flex-shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <span>{error}</span>
                 </div>
               )}
               <button
@@ -1135,357 +433,19 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
                 {isLoading ? "Authenticating..." : "Login →"}
               </button>
             </form>
-            <div className="mt-6 text-center text-xs text-gray-400">
-              Secure authentication • Session stored securely
+            <div className="mt-6 text-center">
+              <button
+                onClick={() => navigate("/register")}
+                className="text-sm text-amber-600 hover:text-amber-700 font-medium"
+              >
+                Don't have an account? Register →
+              </button>
+            </div>
+            <div className="mt-4 text-center text-xs text-gray-400">
+              Secure authentication • Session expires after 12 hours
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  );
-};
-
-// --- MANAGER DASHBOARD ---
-const ManagerDashboard = () => {
-  const { user, logout } = useAuth();
-  const [stats, setStats] = useState({ orders: 24, revenue: 4850, staff: 12 });
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const token = getTokenFromCookie();
-        // Real API call - replace with your actual endpoint
-        // const response = await apiClient.get('/dashboard/stats');
-        // setStats(response.data);
-        setTimeout(() => setLoading(false), 500);
-      } catch (error) {
-        console.error("Failed to fetch dashboard data:", error);
-        setLoading(false);
-      }
-    };
-    fetchDashboardData();
-  }, []);
-
-  const handleLogout = async () => {
-    await logout();
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-md px-6 py-4 flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <div className="bg-amber-600 p-2 rounded-lg">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6 text-white"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-              />
-            </svg>
-          </div>
-          <h1 className="text-xl font-bold text-gray-800">Manager Portal</h1>
-        </div>
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-gray-600">👋 Hi, {user?.name}</span>
-          <button
-            onClick={handleLogout}
-            className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg text-sm font-medium transition"
-          >
-            Logout
-          </button>
-        </div>
-      </nav>
-      <div className="p-6 max-w-6xl mx-auto">
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-800">
-            Dashboard Overview
-          </h2>
-          <p className="text-gray-500">
-            Restaurant performance metrics & management tools
-          </p>
-        </div>
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div className="bg-white rounded-xl shadow p-6 border-l-4 border-amber-500">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-500 text-sm">Today's Orders</p>
-                    <p className="text-3xl font-bold">{stats.orders}</p>
-                  </div>
-                  <div className="bg-amber-100 p-3 rounded-full">
-                    <svg
-                      className="w-6 h-6 text-amber-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
-                      />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white rounded-xl shadow p-6 border-l-4 border-green-500">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-500 text-sm">Revenue (Today)</p>
-                    <p className="text-3xl font-bold">${stats.revenue}</p>
-                  </div>
-                  <div className="bg-green-100 p-3 rounded-full">
-                    <svg
-                      className="w-6 h-6 text-green-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white rounded-xl shadow p-6 border-l-4 border-blue-500">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-500 text-sm">Active Staff</p>
-                    <p className="text-3xl font-bold">{stats.staff}</p>
-                  </div>
-                  <div className="bg-blue-100 p-3 rounded-full">
-                    <svg
-                      className="w-6 h-6 text-blue-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                      />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl shadow p-6">
-              <h3 className="font-semibold text-lg mb-4">Recent Activity</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between border-b pb-2">
-                  <span>🍝 Order #234 - Completed</span>
-                  <span className="text-gray-400 text-sm">10 min ago</span>
-                </div>
-                <div className="flex justify-between border-b pb-2">
-                  <span>🥗 New reservation for 8 guests</span>
-                  <span className="text-gray-400 text-sm">1 hour ago</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>⭐ Inventory low: Olive oil</span>
-                  <span className="text-gray-400 text-sm">2 hours ago</span>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  );
-};
-
-// --- CHEF DASHBOARD ---
-const ChefDashboard = () => {
-  const { user, logout } = useAuth();
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const token = getTokenFromCookie();
-        // Real API call - replace with your actual endpoint
-        // const response = await apiClient.get('/kitchen/orders');
-        // setOrders(response.data);
-        setTimeout(() => {
-          setOrders([
-            {
-              id: 101,
-              item: "Margherita Pizza",
-              table: 4,
-              status: "pending",
-              time: "12:30 PM",
-            },
-            {
-              id: 102,
-              item: "Grilled Salmon",
-              table: 2,
-              status: "preparing",
-              time: "12:45 PM",
-            },
-            {
-              id: 103,
-              item: "Caesar Salad",
-              table: 1,
-              status: "ready",
-              time: "12:15 PM",
-            },
-          ]);
-          setLoading(false);
-        }, 500);
-      } catch (error) {
-        console.error("Failed to fetch orders:", error);
-        setLoading(false);
-      }
-    };
-    fetchOrders();
-  }, []);
-
-  const updateStatus = async (orderId, newStatus) => {
-    try {
-      const token = getTokenFromCookie();
-      // Real API call - replace with your actual endpoint
-      // await apiClient.patch(`/orders/${orderId}/status`, { status: newStatus });
-      setOrders(
-        orders.map((order) =>
-          order.id === orderId ? { ...order, status: newStatus } : order,
-        ),
-      );
-    } catch (error) {
-      console.error("Failed to update order status:", error);
-    }
-  };
-
-  const handleLogout = async () => {
-    await logout();
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-100">
-      <nav className="bg-white shadow-md px-6 py-4 flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <div className="bg-green-700 p-2 rounded-lg">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6 text-white"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.701 2.701 0 00-1.5-.454M9 6v2m3-2v2m3-2v2M9 3h.01M12 3h.01M15 3h.01M21 21v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7h18z"
-              />
-            </svg>
-          </div>
-          <h1 className="text-xl font-bold text-gray-800">Chef's Station</h1>
-        </div>
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-gray-600">👨‍🍳 Chef {user?.name}</span>
-          <button
-            onClick={handleLogout}
-            className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg text-sm font-medium transition"
-          >
-            Logout
-          </button>
-        </div>
-      </nav>
-      <div className="p-6 max-w-5xl mx-auto">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">
-            Kitchen Order Board
-          </h2>
-          <p className="text-gray-500">
-            Manage & update dish preparation status
-          </p>
-        </div>
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
-          </div>
-        ) : (
-          <>
-            <div className="grid gap-5 md:grid-cols-2">
-              {orders.map((order) => (
-                <div
-                  key={order.id}
-                  className="bg-white rounded-xl shadow-md overflow-hidden transition hover:shadow-lg"
-                >
-                  <div className="p-5">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <span className="text-sm font-semibold text-gray-500">
-                          Order #{order.id}
-                        </span>
-                        <h3 className="text-xl font-bold mt-1">{order.item}</h3>
-                        <div className="flex gap-3 mt-2 text-sm text-gray-600">
-                          <span>🍽️ Table {order.table}</span>
-                          <span>⏱️ {order.time}</span>
-                        </div>
-                      </div>
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${order.status === "pending" ? "bg-yellow-100 text-yellow-800" : order.status === "preparing" ? "bg-blue-100 text-blue-800" : "bg-green-100 text-green-800"}`}
-                      >
-                        {order.status.charAt(0).toUpperCase() +
-                          order.status.slice(1)}
-                      </span>
-                    </div>
-                    <div className="mt-4 flex gap-2">
-                      {order.status === "pending" && (
-                        <button
-                          onClick={() => updateStatus(order.id, "preparing")}
-                          className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm"
-                        >
-                          Start Prep
-                        </button>
-                      )}
-                      {order.status === "preparing" && (
-                        <button
-                          onClick={() => updateStatus(order.id, "ready")}
-                          className="bg-green-600 text-white px-3 py-1.5 rounded-lg text-sm"
-                        >
-                          Mark Ready
-                        </button>
-                      )}
-                      {order.status === "ready" && (
-                        <span className="text-green-700 text-sm font-medium">
-                          ✅ Ready for service
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-8 bg-amber-50 p-4 rounded-xl border border-amber-200">
-              <p className="text-amber-800 text-sm">
-                💡 Tip: Update order status as you cook. Completed orders go to
-                serving team.
-              </p>
-            </div>
-          </>
-        )}
       </div>
     </div>
   );
@@ -1493,17 +453,34 @@ const ChefDashboard = () => {
 
 // --- LOGIN PAGE ---
 const LoginPage = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [showLogin, setShowLogin] = useState(true);
 
   useEffect(() => {
-    if (user) {
-      if (user.role === "manager") navigate("/dashboard");
-      else if (user.role === "chef") navigate("/chef/dashboard");
-      else navigate("/");
+    // Only redirect if not loading and user exists
+    if (!loading && user) {
+      console.log("LoginPage - User detected, redirecting:", user.role);
+      if (user.role === "manager") {
+        navigate("/dash/manager", { replace: true });
+      } else if (user.role === "chef") {
+        navigate("/chef/dashboard", { replace: true });
+      } else if (user.role === "staff") {
+        navigate("/staff/dashboard", { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
     }
-  }, [user, navigate]);
+  }, [user, loading, navigate]);
+
+  // Show loading state while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 flex items-center justify-center">
@@ -1519,43 +496,52 @@ const LoginPage = () => {
   );
 };
 
-// --- AUTH PROVIDER WRAPPER (using cookies + sessionStorage instead of localStorage) ---
+// --- AUTH PROVIDER WRAPPER ---
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check sessionStorage for existing session (no localStorage)
-    const storedUser = getUserSession();
-    const token = getTokenFromCookie();
+    // Check for existing session in localStorage
+    const initializeAuth = async () => {
+      const authData = getAuthData();
 
-    if (storedUser && token) {
-      setUser(storedUser);
-    }
-    setLoading(false);
+      if (authData && authData.user && authData.token) {
+        // Check if token is still valid (not expired)
+        if (authData.expiresAt && Date.now() < authData.expiresAt) {
+          setUser(authData.user);
+        } else {
+          // Token expired, clear storage
+
+          clearAuthData();
+        }
+      }
+      setLoading(false);
+    };
+
+    initializeAuth();
 
     // Listen for auth logout events from axios interceptor
     const handleAuthLogout = () => {
       setUser(null);
-      clearUserSession();
-      removeTokenCookie();
+      clearAuthData();
+      toast.info("Session expired. Please login again.");
     };
 
     window.addEventListener("auth:logout", handleAuthLogout);
     return () => window.removeEventListener("auth:logout", handleAuthLogout);
   }, []);
 
-  const login = (userData) => {
+  const login = useCallback((userData) => {
     setUser(userData);
-    setUserSession(userData);
-  };
+  }, []);
 
-  const logout = async () => {
-    await logoutUser(); // This sends request to API
+  const logout = useCallback(async () => {
+    await logoutUser();
     setUser(null);
-    clearUserSession();
-    removeTokenCookie();
-  };
+    clearAuthData();
+    toast.info("Logged out successfully");
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, login, logout, loading }}>
@@ -1564,26 +550,75 @@ const AuthProvider = ({ children }) => {
   );
 };
 
+// --- CHECK AUTH STATUS HELPER (for use in other components) ---
+export const checkAuthStatus = () => {
+  const authData = getAuthData();
+  if (authData && authData.expiresAt && Date.now() < authData.expiresAt) {
+    return {
+      isAuthenticated: true,
+      user: authData.user,
+      token: authData.token,
+    };
+  }
+  return {
+    isAuthenticated: false,
+    user: null,
+    token: null,
+  };
+};
+
+// --- GET AUTH HEADERS HELPER (for API calls) ---
+export const getAuthHeaders = () => {
+  const token = getToken();
+  if (token) {
+    return {
+      Authorization: `Bearer ${token}`,
+    };
+  }
+  return {};
+};
+
 // --- MAIN APP WITH ROUTER ---
 const AppRoutes = () => {
+  const { loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600"></div>
+      </div>
+    );
+  }
+
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/register" element={<Register />} />
       <Route path="/login" element={<LoginPage />} />
+      {/* Your existing protected routes - keep these as they are */}
       <Route
-        path="/dashboard"
+        path="/dash/manager"
         element={
           <ProtectedRoute allowedRoles={["manager"]}>
-            <ManagerDashboard />
+            <Dashboard />
           </ProtectedRoute>
         }
       />
       <Route
         path="/chef/dashboard"
         element={
-          <ProtectedRoute allowedRoles={["chef"]}>
+          <ProtectedRoute allowedRoles={["manager"]}>
+            {/* Your existing Chef Dashboard Component */}
             <ChefDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/staff/dashboard"
+        element={
+          <ProtectedRoute allowedRoles={["staff"]}>
+            {/* Your existing Staff Dashboard Component */}
+            <Dashboard />
           </ProtectedRoute>
         }
       />
@@ -1597,6 +632,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <ToastContainer position="top-right" autoClose={3000} />
         <AppRoutes />
       </AuthProvider>
     </BrowserRouter>
