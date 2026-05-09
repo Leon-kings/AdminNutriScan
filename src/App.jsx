@@ -607,7 +607,7 @@ const AppRoutes = () => {
       <Route
         path="/chef/dashboard"
         element={
-          <ProtectedRoute allowedRoles={["manager"]}>
+          <ProtectedRoute allowedRoles={["chef"]}>
             {/* Your existing Chef Dashboard Component */}
             <ChefDashboard />
           </ProtectedRoute>
