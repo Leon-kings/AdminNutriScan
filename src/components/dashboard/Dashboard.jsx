@@ -15714,39 +15714,82 @@ export const Dashboard = () => {
     toast.success("Data refreshed!");
   };
 
-  const handleLogout = async () => {
-    const token = localStorage.getItem("auth_token");
+//   const handleLogout = async () => {
+//     const token = localStorage.getItem("auth_token");
 
-    try {
-      if (token) {
-        await axios.post(
-          "https://nutriscan-foodanddrinksupply.onrender.com/auth/logout",
-          {},
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+//     try {
+//       if (token) {
+//         await axios.post(
+//           "https://nutriscan-foodanddrinksupply.onrender.com/auth/logout",
+//           {},
+//           {
+//             headers: {
+//               Authorization: `Bearer ${token}`,
+//             },
+//           },
+//         );
+//       }
+
+//       toast.success("Logged out successfully");
+//     } catch (error) {
+//       console.error("LOGOUT ERROR:", error.response?.data || error.message);
+//       toast.error("Session ended");
+//     } finally {
+//       // ALWAYS clear session (important fix)
+//       localStorage.removeItem("auth_token");
+//       localStorage.removeItem("user_data");
+//       sessionStorage.clear();
+
+//       delete axios.defaults.headers.common["Authorization"];
+
+//       setTimeout(() => {
+//         window.location.href = "/login";
+//       }, 1000);
+//     }
+//   };
+
+const handleLogout = async () => {
+  const token = localStorage.getItem("auth_token");
+
+  try {
+    if (token) {
+      await axios.post(
+        "https://nutriscan-foodanddrinksupply.onrender.com/auth/logout",
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
           },
-        );
-      }
-
-      toast.success("Logged out successfully");
-    } catch (error) {
-      console.error("LOGOUT ERROR:", error.response?.data || error.message);
-      toast.error("Session ended");
-    } finally {
-      // ALWAYS clear session (important fix)
-      localStorage.removeItem("auth_token");
-      localStorage.removeItem("user_data");
-      sessionStorage.clear();
-
-      delete axios.defaults.headers.common["Authorization"];
-
-      setTimeout(() => {
-        window.location.href = "/login";
-      }, 1000);
+        }
+      );
     }
-  };
+
+    toast.success("Logged out successfully");
+  } catch (error) {
+    console.error("LOGOUT ERROR:", error.response?.data || error.message);
+    toast.error("Session ended");
+  } finally {
+    // 1. CLEAR STORAGE
+    localStorage.clear();
+    sessionStorage.clear();
+
+    // 2. CLEAR COOKIES (IMPORTANT)
+    document.cookie.split(";").forEach((cookie) => {
+      document.cookie = cookie
+        .replace(/^ +/, "")
+        .replace(/=.*/, "=;expires=" + new Date(0).toUTCString() + ";path=/");
+    });
+
+    // 3. CLEAR AXIOS AUTH HEADER
+    delete axios.defaults.headers.common["Authorization"];
+
+    // 4. FORCE HARD RESET STATE (important if using React state)
+    window.dispatchEvent(new Event("logout"));
+
+    // 5. FORCE REDIRECT (no back to dashboard)
+    window.location.replace("/login");
+  }
+};
 
   useEffect(() => {
     refreshAll();
