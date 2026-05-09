@@ -113,7 +113,7 @@ const loginUser = async (email, password) => {
     const response = await apiClient.post("/auth/login", { email, password });
     const data = response.data;
 
-    console.log("Full Login API Response:", data);
+    // console.log("Full Login API Response:", data);
 
     // YOUR API RETURNS: { success: true, message: "...", data: { token: "...", user: {...} } }
     if (data.success === true && data.data) {
@@ -623,6 +623,7 @@ const AppRoutes = () => {
         }
       />
       <Route path="*" element={<Navigate to="/login" replace />} />
+      
     </Routes>
   );
 };
