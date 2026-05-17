@@ -2957,7 +2957,7 @@ const KitchenOrderCard = ({
 };
 
 // ========== ORDER DETAILS MODAL ==========
-const OrderDetailsModal = ({
+const  OrderDetailsModal = ({
   order,
   onClose,
   onStartPreparation,
